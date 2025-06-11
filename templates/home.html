@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Ana Sayfa - Bakla.io{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8 px-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Ana Akış (Sol Sütun) -->
+        <div class="md:col-span-2">
+            <!-- Yeni Bakla Formu -->
+            <div 
+                x-data="{ 
+                    content: '', 
+                    initialBalance: {{ user.wallet.balance }},
+                    get remainingBalance() {
+                        return this.initialBalance - this.content.length;
+                    },
+                    get isButtonDisabled() {
+                        return this.content.length === 0 || this.remainingBalance < 0;
+                    }
+                }"
+                class="bg-white p-6 rounded-lg shadow-md mb-8"
+            >
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Yeni Bakla</h2>
+                    <div class="text-lg font-semibold" :class="remainingBalance < 0 ? 'text-red-500' : 'text-purple-600'">
+                        Kalan Harf: <span x-text="remainingBalance"></span>
+                    </div>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <textarea 
+                        name="content" 
+                        id="id_content" 
+                        x-model="content"
+                        class="w-full p-3 border rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                        rows="4"
+                        placeholder="Ağzındaki baklayı çıkar..."
+                    ></textarea>
+                    <div class="text-right mt-4">
+                        <button 
+                            type="submit" 
+                            :disabled="isButtonDisabled"
+                            class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg transition"
+                            :class="{ 'opacity-50 cursor-not-allowed': isButtonDisabled }"
+                        >
+                            Paylaş
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Bakla Akışı -->
+            <div class="space-y-6" id="post-list">
+                {% include "posts/partials/post_list.html" with posts=posts %}
+            </div>
+
+        </div>
+
+        <!-- Sağ Sütun (Önerilenler ve Gündem) -->
+        <div class="md:col-span-1 space-y-8">
+            <div class="bg-white p-6 rounded-lg shadow-md sticky top-8">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Kimi Takip Etmeli?</h3>
+                <div class="space-y-4">
+                    {% for suggested_user in suggested_users %}
+                        <div x-data="{ followed: false }" x-show="!followed" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="flex items-center justify-between">
+                            <a href="{% url 'profile' suggested_user.username %}" class="flex items-center">
+                                {% if suggested_user.profile_picture %}
+                                    <img src="{{ suggested_user.profile_picture.url }}" alt="{{ suggested_user.username }}" class="w-10 h-10 rounded-full object-cover mr-3">
+                                {% else %}
+                                    <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                                {% endif %}
+                                <div>
+                                    <span class="font-semibold text-gray-900 hover:underline">{{ suggested_user.username }}</span>
+                                </div>
+                            </a>
+                            <button @click="
+                                fetch(`{% url 'follow' suggested_user.username %}`, {
+                                    method: 'POST',
+                                    headers: {'X-CSRFToken': '{{ csrf_token }}'}
+                                })
+                                .then(res => res.json())
+                                .then(data => { if(data.success) { followed = true; } });
+                            " type="button" class="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-semibold rounded-full hover:bg-purple-200">
+                                Takip Et
+                            </button>
+                        </div>
+                    {% empty %}
+                        <p class="text-sm text-gray-500">Önerilecek kimse kalmadı. Herkesi takip ediyorsun!</p>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-md sticky top-48">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Gündem</h3>
+                <div class="space-y-3">
+                    {% for hashtag in popular_hashtags %}
+                        <a href="{% url 'posts:hashtag_posts' hashtag.name %}" class="block group">
+                            <p class="font-bold text-gray-800 group-hover:text-purple-600 transition-colors">#{{ hashtag.name }}</p>
+                            <p class="text-sm text-gray-500">{{ hashtag.num_posts }} bakla</p>
+                        </a>
+                    {% empty %}
+                        <p class="text-sm text-gray-500">Henüz popüler bir gündem yok.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

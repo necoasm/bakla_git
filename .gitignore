@@ -1,0 +1,11 @@
+# Sanal Ortam
+venv/
+__pycache__/
+
+# Veritabanı
+db.sqlite3
+
+# Diğer
+.vscode/
+*.pyc
+*.zip

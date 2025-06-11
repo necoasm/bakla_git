@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile_user.username }} - Profil{% endblock %}
+
+{% block content %}
+<div 
+    x-data="{
+        isFollowing: {{ is_following|yesno:'true,false' }},
+        followerCount: {{ profile_user.follower_count }},
+        profileBalance: {{ profile_user.wallet.balance }},
+        showTransferModal: false,
+        toggleFollow() {
+            const username = '{{ profile_user.username }}';
+            const url = this.isFollowing ? `{% url 'unfollow' profile_user.username %}` : `{% url 'follow' profile_user.username %}`;
+            const csrfToken = '{{ csrf_token }}';
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    this.isFollowing = data.is_following;
+                    this.followerCount = data.follower_count;
+                    this.profileBalance = data.new_balance;
+                }
+            });
+        }
+    }"
+    class="max-w-4xl mx-auto py-8 px-4"
+>
+    <!-- Profil Başlığı -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex items-center">
+            {% if profile_user.profile_picture %}
+                <img src="{{ profile_user.profile_picture.url }}" alt="{{ profile_user.username }}" class="w-24 h-24 rounded-full mr-6 object-cover">
+            {% else %}
+                <div class="w-24 h-24 bg-gray-300 rounded-full mr-6 flex-shrink-0"></div>
+            {% endif %}
+            
+            <div class="flex-grow">
+                <div class="flex items-baseline space-x-4">
+                    <h1 class="text-3xl font-bold text-gray-900">{{ profile_user.username }}</h1>
+                    <div class="text-lg font-semibold text-purple-600" title="Kalan Harf">
+                        <span class="mr-1">💰</span>
+                        <span x-text="profileBalance"></span>
+                    </div>
+                </div>
+
+                {% if profile_user.bio %}
+                    <p class="text-gray-600 mt-1">{{ profile_user.bio }}</p>
+                {% else %}
+                    <p class="text-gray-500 mt-1 italic">Henüz bir bio eklenmemiş.</p>
+                {% endif %}
+
+                <p class="text-sm text-gray-500 mt-1">Katılım: {{ profile_user.date_joined|date:"F Y" }}</p>
+                
+                <div class="flex space-x-6 mt-4">
+                    <div>
+                        <span class="font-bold text-lg">{{ profile_user.posts.count }}</span>
+                        <span class="text-gray-600">Bakla</span>
+                    </div>
+                    <a href="{% url 'followers' profile_user.username %}" class="hover:text-purple-600">
+                        <span class="font-bold text-lg" x-text="followerCount"></span>
+                        <span class="text-gray-600">Takipçi</span>
+                    </a>
+                    <a href="{% url 'following' profile_user.username %}" class="hover:text-purple-600">
+                        <span class="font-bold text-lg">{{ profile_user.following_count }}</span>
+                        <span class="text-gray-600">Takip Edilen</span>
+                    </a>
+                </div>
+            </div>
+            <div class="ml-auto flex items-center space-x-2">
+                {% if user.is_authenticated %}
+                    {% if user == profile_user %}
+                        <a href="{% url 'profile_edit' %}" class="px-4 py-2 border border-gray-300 rounded-full text-sm font-semibold text-gray-700 hover:bg-gray-100">
+                            Profili Düzenle
+                        </a>
+                    {% else %}
+                        <button @click="toggleFollow()" type="button" 
+                            :class="isFollowing ? 'border border-gray-300 text-gray-700 hover:bg-gray-100' : 'bg-purple-600 text-white hover:bg-purple-700'"
+                            class="px-4 py-2 rounded-full text-sm font-semibold transition w-28">
+                            <span x-text="isFollowing ? 'Takipten Çık' : 'Takip Et'"></span>
+                        </button>
+                        <button @click="showTransferModal = true" class="p-2 border border-gray-300 rounded-full text-gray-600 hover:bg-gray-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.5 2.5 0 00-1.134 0V7.418zM10 16a2.5 2.5 0 001.134-4.734V7.167a2.5 2.5 0 00-2.268 0v4.1a2.5 2.5 0 001.134 4.734zM10 4a2.5 2.5 0 00-1.134 4.734V12.83a2.5 2.5 0 002.268 0V8.734A2.5 2.5 0 0010 4z" /></svg>
+                        </button>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Kullanıcının Baklaları -->
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Baklalar</h2>
+    <div class="space-y-6" id="post-list">
+        {% include "posts/partials/post_list.html" with posts=posts %}
+    </div>
+
+    <!-- Harf Gönderme Modal'ı -->
+    <div x-show="showTransferModal" 
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+         style="display: none;">
+        <div @click.away="showTransferModal = false" class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold mb-4">Harf Gönder</h3>
+            <p class="mb-4 text-sm text-gray-600"><strong>{{ profile_user.username }}</strong> kullanıcısına göndermek istediğiniz harf miktarını girin.</p>
+            <form action="{% url 'economy:transfer' profile_user.username %}" method="post">
+                {% csrf_token %}
+                <input type="number" name="amount" min="1" placeholder="Miktar" class="w-full p-2 border rounded mb-4" required>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" @click="showTransferModal = false" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

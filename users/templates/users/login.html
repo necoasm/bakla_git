@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-100">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Giriş Yap</h2>
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="text-right">
+                <a href="#" class="text-sm text-purple-600 hover:underline">Şifremi unuttum</a>
+            </div>
+            <button type="submit" class="w-full bg-purple-600 text-white p-3 rounded-lg font-semibold hover:bg-purple-700 transition">
+                Giriş Yap
+            </button>
+            <p class="text-center text-sm text-gray-600">
+                Hesabın yok mu? <a href="{% url 'register' %}" class="font-medium text-purple-600 hover:underline">Kayıt ol</a>
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}

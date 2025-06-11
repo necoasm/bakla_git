@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Bakla Detayı{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8 px-4">
+    <div class="space-y-6">
+        {% include "posts/_post.html" with post=post %}
+    </div>
+
+    <!-- Yanıt Yazma Formu -->
+    <div 
+        x-data="{ 
+            content: '', 
+            balance: {{ user.wallet.balance|default:0 }},
+            get remaining() { return this.balance - this.content.length; },
+            get isDisabled() { return this.content.length === 0 || this.remaining < 0; }
+        }"
+        class="mt-8 bg-white p-6 rounded-lg shadow-md"
+    >
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Yanıtla</h2>
+            {% if user.is_authenticated %}
+            <div class="text-lg font-semibold" :class="remaining < 0 ? 'text-red-500' : 'text-purple-600'">
+                Kalan Harf: <span x-text="remaining"></span>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if user.is_authenticated %}
+            <form method="post">
+                {% csrf_token %}
+                <textarea name="content" x-model="content" class="w-full p-3 border rounded-lg" rows="2" placeholder="Yanıtını buraya yaz..."></textarea>
+                <div class="text-right mt-4">
+                    <button type="submit" :disabled="isDisabled" class="px-6 py-2 bg-purple-600 text-white rounded-lg" :class="{ 'opacity-50': isDisabled }">Gönder</button>
+                </div>
+            </form>
+        {% else %}
+            <p class="text-gray-600">Yanıt yazabilmek için <a href="{% url 'login' %}" class="text-purple-600 hover:underline">giriş yapmalısın</a>.</p>
+        {% endif %}
+    </div>
+
+    <!-- Yanıtlar Listesi -->
+    <div class="mt-8">
+        <h2 class="text-xl font-bold mb-4">Yanıtlar ({{ post.comments.count }})</h2>
+        <div class="space-y-4" id="comment-list">
+            {% include "posts/partials/comment_list.html" with comments=comments %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Profili Düzenle{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8 px-4">
+    <div class="bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Profili Düzenle</h1>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="space-y-6">
+                {{ form.as_p }}
+            </div>
+            <div class="mt-8 border-t pt-6 flex justify-end">
+                <a href="{% url 'profile' user.username %}" class="px-6 py-2 border border-gray-300 rounded-md text-sm font-semibold text-gray-700 hover:bg-gray-50 mr-4">
+                    İptal
+                </a>
+                <button type="submit" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700">
+                    Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% for comment in comments %}
+    {% include "posts/_comment.html" with comment=comment %}
+{% endfor %}
+
+{% if comments.has_next %}
+    <div hx-get="?page={{ comments.next_page_number }}" 
+         hx-trigger="intersect" 
+         hx-swap="outerHTML">
+        <div class="text-center p-4">
+            <p class="text-gray-500">Daha fazla yanıt yükleniyor...</p>
+        </div>
+    </div>
+{% endif %}

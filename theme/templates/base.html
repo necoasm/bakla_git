@@ -1,0 +1,23 @@
+<!-- templates/base.html -->
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bakla.io</title>
+    {% tailwind_css %}
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto mt-10">
+        <h1 class="text-4xl font-bold text-blue-600 text-center">
+            Merhaba Tailwind!
+        </h1>
+        <p class="text-center text-gray-700 mt-4">
+            Eğer bu yazı mavi ve kalınsa, Tailwind CSS başarıyla çalışıyor demektir.
+        </p>
+    </div>
+
+</body>
+</html>

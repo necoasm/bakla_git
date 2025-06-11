@@ -1,0 +1,102 @@
+{% load post_tags %}
+
+<div 
+    x-data="{ 
+        likeCount: {{ post.like_count }},
+        dislikeCount: {{ post.dislike_count }},
+        userInteraction: '{{ post.user_interaction|default_if_none:'' }}',
+        showMenu: false,
+        copyLink() {
+            const url = '{{ post.absolute_url }}';
+            navigator.clipboard.writeText(url).then(() => {
+                window.dispatchEvent(new CustomEvent('toast-message', { detail: { text: 'Bağlantı kopyalandı!' } }));
+                this.showMenu = false;
+            });
+        },
+        interact(type) {
+            const url = `{% url 'posts:interact' post.id %}`;
+            const csrfToken = '{{ csrf_token }}';
+            const formData = new FormData();
+            formData.append('interaction_type', type);
+            fetch(url, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.likeCount = data.like_count;
+                    this.dislikeCount = data.dislike_count;
+                    if (this.userInteraction === type) {
+                        this.userInteraction = '';
+                    } else {
+                        this.userInteraction = type;
+                    }
+                }
+            });
+        }
+    }"
+    @click.away="showMenu = false"
+    class="bg-white p-5 rounded-lg shadow-md" id="post-{{ post.id }}"
+>
+    <div class="flex items-center mb-3">
+        {% if post.author.profile_picture %}
+            <img src="{{ post.author.profile_picture.url }}" alt="{{ post.author.username }}" class="w-10 h-10 rounded-full object-cover mr-3">
+        {% else %}
+            <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+        {% endif %}
+        <div>
+            <a href="{% url 'profile' post.author.username %}" class="font-bold text-gray-900 hover:underline">{{ post.author.username }}</a>
+            <p class="text-sm text-gray-500">{{ post.created_at|timesince }} önce</p>
+        </div>
+        
+        <div class="ml-auto relative">
+            <button @click="showMenu = !showMenu" class="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
+            </button>
+            <div x-show="showMenu" x-transition
+                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10"
+                 style="display: none;">
+                <a @click.prevent="copyLink()" href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Bağlantıyı Kopyala</a>
+                {% if request.user == post.author %}
+                    <form action="{% url 'posts:delete' post.id %}" method="post" onsubmit="return confirm('Bu baklayı silmek istediğine emin misin?');">
+                        {% csrf_token %}
+                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                            Baklayı Sil
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% if request.resolver_match.view_name != 'posts:detail' %}
+        <a href="{% url 'posts:detail' post.id %}" class="block">
+            <p class="text-gray-800 leading-relaxed break-words mb-4">
+                {{ post.content|linkify|safe }}
+            </p>
+        </a>
+    {% else %}
+        <p class="text-gray-800 leading-relaxed break-words mb-4">
+            {{ post.content|linkify|safe }}
+        </p>
+    {% endif %}
+    
+    <div class="flex items-center space-x-6 border-t pt-3">
+        <button @click="interact('L')" type="button" class="flex items-center space-x-2 transition-colors" :class="userInteraction === 'L' ? 'text-green-500' : 'text-gray-500 hover:text-green-500'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="{'fill-current': userInteraction === 'L'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 18.331v-11h3.732a2 2 0 011.789 2.894l-1.5 3A2 2 0 0013 12h1.5" /></svg>
+            <span x-text="likeCount"></span>
+        </button>
+        <button @click="interact('D')" type="button" class="flex items-center space-x-2 transition-colors" :class="userInteraction === 'D' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="{'fill-current': userInteraction === 'D'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.017c.163 0 .326-.02-.485-.06L17 5.669v11H8.268a2 2 0 01-1.789-2.894l1.5-3A2 2 0 007 9H5.5" /></svg>
+            <span x-text="dislikeCount"></span>
+        </button>
+        <a href="{% url 'posts:detail' post.id %}" class="flex items-center space-x-2 text-gray-500 hover:text-purple-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span>{{ post.comment_count }}</span>
+        </a>
+    </div>
+</div>

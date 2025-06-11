@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}#{{ hashtag.name }} - Gündem{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8 px-4">
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900">#{{ hashtag.name }}</h1>
+        <p class="text-lg text-gray-600 mt-1">{{ hashtag.post_set.count }} bakla</p>
+    </div>
+    
+    <!-- DÜZELTME: Artık post_list.html parçasını kullanıyoruz -->
+    <div class="space-y-6" id="post-list">
+        {% include "posts/partials/post_list.html" with posts=posts %}
+    </div>
+</div>
+{% endblock %}

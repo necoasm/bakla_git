@@ -1,0 +1,56 @@
+{% for notification in notifications %}
+    <li class="p-4 hover:bg-gray-50 {% if not notification.is_read %}bg-purple-50{% endif %}">
+        
+        {% comment %} Takip Bildirimi {% endcomment %}
+        {% if notification.verb == 'F' %}
+            <a href="{% url 'profile' notification.sender.username %}" class="flex items-center">
+                {% if notification.sender.profile_picture %}
+                    <img src="{{ notification.sender.profile_picture.url }}" alt="{{ notification.sender.username }}" class="w-10 h-10 rounded-full object-cover mr-3">
+                {% else %}
+                    <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                {% endif %}
+                <div>
+                    <p><strong>{{ notification.sender.username }}</strong> seni takip etmeye başladı. <span class="text-green-600 font-semibold">250 harf kazandın.</span></p>
+                    <p class="text-sm text-gray-500 mt-1">{{ notification.created_at|timesince }} önce</p>
+                </div>
+            </a>
+
+        {% comment %} Post veya Yorum Etkileşimleri {% endcomment %}
+        {% elif notification.action_object %}
+            <a href="{{ notification.action_object.get_absolute_url }}" class="flex items-center">
+                {% if notification.sender.profile_picture %}
+                    <img src="{{ notification.sender.profile_picture.url }}" alt="{{ notification.sender.username }}" class="w-10 h-10 rounded-full object-cover mr-3">
+                {% else %}
+                    <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                {% endif %}
+                <div>
+                    <p>
+                        <strong>{{ notification.sender.username }}</strong>
+                        {% if notification.verb == 'PL' %}
+                            baklanı beğendi. <span class="text-green-600 font-semibold">50 harf kazandın.</span>
+                        {% elif notification.verb == 'PD' %}
+                            baklanı beğenmedi.
+                        {% elif notification.verb == 'CL' %}
+                            yanıtını beğendi. <span class="text-green-600 font-semibold">50 harf kazandın.</span>
+                        {% elif notification.verb == 'CD' %}
+                            yanıtını beğenmedi.
+                        {% elif notification.verb == 'M' %}
+                            bir içerikte senden bahsetti.
+                        {% endif %}
+                    </p>
+                    <p class="text-gray-600 italic mt-1">"{{ notification.action_object.content|truncatechars:30 }}"</p>
+                    <p class="text-sm text-gray-500 mt-1">{{ notification.created_at|timesince }} önce</p>
+                </div>
+            </a>
+        {% endif %}
+    </li>
+{% endfor %}
+
+{% if notifications.has_next %}
+    <li hx-get="?page={{ notifications.next_page_number }}" 
+        hx-trigger="intersect" 
+        hx-swap="outerHTML"
+        class="p-4 text-center">
+        <p class="text-gray-500">Daha fazla yükleniyor...</p>
+    </li>
+{% endif %}

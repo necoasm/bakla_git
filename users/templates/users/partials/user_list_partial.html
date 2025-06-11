@@ -1,0 +1,37 @@
+{% for f_user in user_list %}
+<div class="flex items-center justify-between p-4 border-b">
+<a href="{% url 'profile' f_user.username %}" class="flex items-center">
+{% if f_user.profile_picture %}
+<img src="{{ f_user.profile_picture.url }}" alt="{{ f_user.username }}" class="w-12 h-12 rounded-full object-cover mr-4">
+{% else %}
+<div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+{% endif %}
+<div>
+<p class="font-bold text-gray-900">{{ f_user.username }}</p>
+<p class="text-sm text-gray-500">💰 {{ f_user.wallet.balance }}</p>
+</div>
+</a>
+{% if request.user.is_authenticated and request.user != f_user %}
+        <!-- DÜZELTME: Artık view'den gelen hazır bilgiyi kullanıyoruz -->
+        <div x-data="{ isFollowing: {{ f_user.is_followed_by_request_user|yesno:'true,false' }} }">
+            <button @click="
+                const url = isFollowing ? `{% url 'unfollow' f_user.username %}` : `{% url 'follow' f_user.username %}`;
+                fetch(url, { method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'}})
+                .then(res => res.json()).then(data => { if(data.success) { isFollowing = data.is_following; } });
+            " type="button" 
+                :class="isFollowing ? 'border border-gray-300 text-gray-700 hover:bg-gray-100' : 'bg-purple-600 text-white hover:bg-purple-700'"
+                class="px-4 py-2 rounded-full text-sm font-semibold transition w-28">
+                <span x-text="isFollowing ? 'Takipten Çık' : 'Takip Et'"></span>
+            </button>
+        </div>
+    {% endif %}
+</div>
+{% endfor %}
+{% if user_list.has_next %}
+<div hx-get="{{ request.path }}?page={{ user_list.next_page_number }}"
+hx-trigger="intersect"
+hx-swap="outerHTML"
+class="p-4 text-center">
+<p class="text-gray-500">Daha fazla yükleniyor...</p>
+</div>
+{% endif %}

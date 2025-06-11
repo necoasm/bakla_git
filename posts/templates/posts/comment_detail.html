@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Yanıt Detayı{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8 px-4">
+    
+    <div class="mb-6 opacity-80 transform scale-95">
+        <h3 class="text-sm font-semibold text-gray-600 mb-2">
+            <a href="{% url 'profile' comment.author.username %}" class="font-bold">{{ comment.author.username }}</a> kullanıcısının 
+            <a href="{% url 'profile' comment.post.author.username %}" class="font-bold">{{ comment.post.author.username }}</a> kullanıcısının 
+            <a href="{% url 'posts:detail' comment.post.id %}" class="text-purple-600 hover:underline">baklasına</a> verdiği yanıt:
+        </h3>
+        {% include "posts/_post.html" with post=comment.post %}
+    </div>
+
+    <hr class="my-8 border-dashed">
+
+    <div class="space-y-6">
+        {% include "posts/_comment.html" with comment=comment %}
+    </div>
+
+</div>
+{% endblock %}

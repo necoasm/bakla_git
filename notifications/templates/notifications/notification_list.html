@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Bildirimler{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8 px-4">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Bildirimler</h1>
+    <div class="bg-white rounded-lg shadow-md">
+        <ul class="divide-y divide-gray-200" id="notification-list">
+            {% include "notifications/partials/notification_list_partial.html" with notifications=notifications %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
